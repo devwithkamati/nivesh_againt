@@ -1,273 +1,254 @@
-import 'package:dtbroker_agent/view/homeScreen/commision_page.dart';
-import 'package:dtbroker_agent/view/homeScreen/total_balance_page.dart';
-import 'package:dtbroker_agent/view/homeScreen/total_listing_page.dart';
-import 'package:dtbroker_agent/view/homeScreen/total_sell_page.dart';
+import 'package:dtbroker_agent/controller/admin_profile_controller.dart';
+import 'package:dtbroker_agent/view/profileScreen/add_properties_page.dart';
+import 'package:dtbroker_agent/view/profileScreen/latest_lead_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../utils/app_colors.dart';
+import 'package:get/get.dart';
 
-import '../loginScreen/login_page.dart';
-import 'active_leads_page.dart';
-import 'kyc_status_page.dart';
+import 'notification_page.dart';
+
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key});
-
-  static const Color primaryColor = Color(0xFF2D5016);
-  static const Color accentColor = Color(0xFFE6C56F);
-  static const Color backgroundColor = Color(0xFFF8FAF5);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isKycOpen = false;
+  final profileController = Get.find<AdminProfileController>();
+  int selectedTab = 0;
+  String getGreeting() {
+    final hour = DateTime.now().hour;
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
+    if (hour < 12) {
+      return "Good Morning";
+    } else if (hour < 17) {
+      return "Good Afternoon";
+    } else {
+      return "Good Evening";
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HomePage.backgroundColor,
-      drawer: _buildDrawer(context),
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: HomePage.primaryColor,
-        title: const Text("Dashboard", style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white, size: 30),
-        actions: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18),
-            child: Icon(
-              size: 27,
-              Icons.notifications,
-              color: HomePage.backgroundColor,
-            ),
-          )
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildHorizontalSection(),
-          _buildGridSection(context),
-        ],
-      ),
-    );
-  }
+      backgroundColor: Colors.grey.shade100,
 
-  //  Drawer
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      backgroundColor: HomePage.backgroundColor,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          /// HEADER
-          DrawerHeader(
-            decoration: const BoxDecoration(color: HomePage.primaryColor),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 42,
-                  backgroundColor: Colors.white,
-                  child: ClipOval(
-                    child: Image.asset(
-                      "assets/images/profile_image.jpeg",
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Admin",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                    SizedBox(height: 5),
-                    Text("admin@gmail.com",
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          _drawerItem(context, Icons.dashboard, "Dashboard"),
-          _drawerItem(context, Icons.person, "Profile"),
-
-          /// 🔥 KYC EXPANDABLE
-          ListTile(
-            leading: const Icon(Icons.verified_user),
-            title: const Text("KYC"),
-            trailing: Icon(
-              _isKycOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-            ),
-            onTap: () {
-              setState(() {
-                _isKycOpen = !_isKycOpen;
-              });
-            },
-          ),
-
-          /// 🔥 DROPDOWN CONTENT
-          if (_isKycOpen)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: "Aadhar Number",
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: "PAN Number",
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: "Bank Account Number",
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: "IFSC Code",
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HomePage.primaryColor,
-                    ),
-                    onPressed: () {},
-                    child: const Text("Submit"),
-                  ),
-                  const SizedBox(height: 15),
+      /// ================= HEADER =================
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(75),
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          flexibleSpace: Container(
+            padding: const EdgeInsets.only(top: 30, left: 20, right: 20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primaryBlue,
+                  AppColors.lightBlue,
                 ],
               ),
             ),
+            child: Obx(() {
 
-          _drawerItem(context, Icons.list, "Total listing"),
-          _drawerItem(context, Icons.sell, "Total sell"),
-          _drawerItem(context, Icons.account_balance_wallet, "Wallet balance"),
+              final data = profileController.profile.value;
 
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text("Logout", style: TextStyle(color: Colors.red)),
-            onTap: () async {
-              await _storage.delete(key: "auth_token");
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-                (route) => false,
+              if (profileController.isLoading.value) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              }
+
+              return Row(
+                children: [
+
+                  /// 🔹 Profile Image
+                  Obx(() {
+                    final data = profileController.profile.value;
+
+                    return CircleAvatar(
+                      radius: 28,
+                      backgroundImage: data?.agentImage != null &&
+                          data!.agentImage!.isNotEmpty
+                          ? NetworkImage(
+                          "https://niveshcore.com${data.agentImage}?t=${DateTime.now().millisecondsSinceEpoch}")
+                          : const AssetImage(
+                          "assets/images/profile_image.jpeg") as ImageProvider,
+                    );
+                  }),
+
+                  const SizedBox(width: 12),
+
+                  /// 🔹 Name & Greeting
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+
+                        Text(
+                          "${getGreeting()}  ",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        Text(
+                          data?.agentName ?? "",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                       ),
+                      ],
+                    ),
+                  ),
+
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.notifications),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NotificationPage(
+                                notifications:notificationList,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      if (notificationList.isNotEmpty)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              notificationList.length.toString(),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  )
+                ],
               );
-            },
+            }),
           ),
-        ],
+        ),
       ),
-    );
-  }
 
-  Widget _drawerItem(BuildContext context, IconData icon, String title) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () {
-        Navigator.pop(context);
-      },
-    );
-  }
-
-  /// 🔹 Horizontal Scroll Section
-  Widget _buildHorizontalSection() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: SizedBox(
-        height: 180,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.all(12),
+      /// ================= BODY =================
+      body: SingleChildScrollView(
+        child: Column(
           children: [
-            _buildPropertyCard("assets/images/Buyingimage.png", "Luxury Villa",
-                "Mumbai", "₹2.5 Cr", "For Sale"),
-            _buildPropertyCard("assets/images/homeimg.png", "Modern Apartment",
-                "Delhi", "₹85 Lakh", "For Rent"),
-            _buildPropertyCard("assets/images/testimagelogo.png", "Farm House",
-                "Pune", "₹1.2 Cr", "New Launch"),
-            _buildPropertyCard("assets/images/Buyingimage.png",
-                "Commercial Space", "Bangalore", "₹3 Cr", "Sold"),
+            const SizedBox(height: 20),
+            _statsSection(),
+            const SizedBox(height: 20),
+            _buttonsSection( context),
+            const SizedBox(height: 25),
+            _leadsOverviewSection(),
+            const SizedBox(height: 25),
+            _recentActivitiesSection(),
+            const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPropertyCard(String image, String title, String location,
-      String price, String status) {
-    return Container(
-      width: 280,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+  /// ================= LEADS OVERVIEW =================
+  Widget _leadsOverviewSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
+        elevation: 4,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Stack(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(image,
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.black.withOpacity(0.4), Colors.transparent],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => setState(() => selectedTab = 0),
+                    child: Text(
+                      "Leads Overview",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: selectedTab == 0
+                            ? AppColors.primaryBlue
+                            : Colors.grey,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 20),
+                  GestureDetector(
+                    onTap: () => setState(() => selectedTab = 1),
+                    child: Text(
+                      "Recent Activity",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: selectedTab == 1
+                            ? AppColors.primaryBlue
+                            : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Positioned(
-                left: 12,
-                bottom: 12,
-                right: 12,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(status,
-                        style: const TextStyle(
-                            color: Colors.amber, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(title,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                    Text(location,
-                        style: const TextStyle(color: Colors.white70)),
-                    const SizedBox(height: 4),
-                    Text(price,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600)),
-                  ],
-                ),
+              const SizedBox(height: 15),
+
+              selectedTab == 0
+                  ? Column(
+                children: const [
+                  Row(
+                    mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
+                    children: [
+                      _OverviewBox(Icons.person, "12", "New Leads"),
+                      _OverviewBox(Icons.access_time, "5", "In Progress"),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
+                    children: [
+                      _OverviewBox(Icons.location_on, "3", "Site Visits"),
+                      _OverviewBox(Icons.check_circle, "3", "Closed Leads"),
+                    ],
+                  ),
+                ],
+              )
+                  : Column(
+                children: [
+                  _simpleActivityTile(
+                      "Property Viewed", "2 hours ago"),
+                  const SizedBox(height: 10),
+                  _simpleActivityTile(
+                      "New Lead Added", "5 hours ago"),
+                  const SizedBox(height: 10),
+                  _simpleActivityTile(
+                      "Site Visit Scheduled", "Yesterday"),
+                ],
               ),
             ],
           ),
@@ -276,119 +257,244 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// 🔹 Grid Section (All Clickable)
-  Widget _buildGridSection(BuildContext context) {
-    return Expanded(
+  Widget _simpleActivityTile(String title, String time) {
+    return Row(
+      children: [
+        const Icon(Icons.circle,
+            size: 8, color: AppColors.primaryOrange),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(title,
+              style: const TextStyle(fontWeight: FontWeight.w500)),
+        ),
+        Text(time, style: const TextStyle(color: Colors.grey)),
+      ],
+    );
+  }
+}
+
+/// ================= STATS =================
+Widget _statsSection() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Card(
+      shape:
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1,
-          children: [
-            _dashboardCard(
-              context,
-              "Total Sell",
-              Icons.sell,
-              const Color(0xFF1E3C72),
-              const Color(0xFF2A5298),
-              const TotalSellPage(),
-            ),
-            _dashboardCard(
-              context,
-              "Total Listing",
-              Icons.list_alt,
-              const Color(0xFF134E5E),
-              const Color(0xFF71B280),
-              const TotalListingPage(),
-            ),
-            _dashboardCard(
-              context,
-              "Wallet Balance",
-              Icons.account_balance_wallet,
-              const Color(0xFF42275A),
-              const Color(0xFF734B6D),
-              const TotalBalancePage(),
-            ),
-            _dashboardCard(
-              context,
-              "Active Leads",
-              Icons.person_search,
-              const Color(0xFF0F2027),
-              const Color(0xFF2C5364),
-              const ActiveLeadsPage(),
-            ),
-            _dashboardCard(
-              context,
-              "KYC Status",
-              Icons.verified_user,
-              const Color(0xFF355C7D),
-              const Color(0xFF6C5B7B),
-              const KycStatusPage(),
-            ),
-            _dashboardCard(
-              context,
-              "Commission",
-              Icons.trending_up,
-              const Color(0xFF2C3E50),
-              const Color(0xFF4CA1AF),
-              const CommisionPage(),
-            ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: const [
+            _StatItem(Icons.person, "268", "Total Leads"),
+            _StatItem(Icons.home, "34", "Total Listings"),
+            _StatItem(Icons.apartment, "17", "Active Listings"),
+            _StatItem(Icons.remove_red_eye, "428", "Today's Views"),
           ],
         ),
       ),
+    ),
+  );
+}
+
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String number;
+  final String label;
+
+  const _StatItem(this.icon, this.number, this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Icon(Icons.circle, size: 0), // placeholder fix
+        Icon(icon, color: AppColors.primaryBlue),
+        const SizedBox(height: 4),
+        Text(number,
+            style:
+            const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: const TextStyle(fontSize: 11)),
+      ],
     );
   }
+}
 
-  Widget _dashboardCard(
-    BuildContext context,
-    String title,
-    IconData icon,
-    Color color1,
-    Color color2,
-    Widget page,
-  ) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => page),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: LinearGradient(
-            colors: [color1, color2],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+/// ================= BUTTONS =================
+Widget _buttonsSection(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Row(
+      children: [
+        Expanded(
+          child: _actionButton(
+            Icons.add,
+            "Add Property",
+                () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                  const AddPropertiesPage(),
+                ),
+              );
+            },
           ),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 6,
-              offset: Offset(2, 4),
-            ),
+        ),
+
+        const SizedBox(width: 12),
+
+        Expanded(
+          child: _actionButton(
+            Icons.person_add,
+            "Add Lead",
+                () {
+              // TODO: Add Lead Page navigation
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                      const LatestLeadsPage(),
+                    ),
+                  );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+Widget _actionButton(
+    IconData icon,
+    String text,
+    VoidCallback onTap,
+    ) {
+  return InkWell(
+    onTap: onTap,
+    child: Container(
+      height: 50,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            AppColors.primaryBlue,
+            AppColors.lightBlue,
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 40),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-          ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+/// ================= RECENT ACTIVITIES =================
+Widget _recentActivitiesSection() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Recent Activities",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
+        const SizedBox(height: 15),
+        SizedBox(
+          height: 240,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: SizedBox(width: 220, child: _rentActivityCard()),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _rentActivityCard() {
+  return Card(
+    shape:
+    RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    elevation: 4,
+    child: Padding(
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              "assets/images/homeimg.png",
+              height: 120,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "House for Rent in Noida, UP\n2 days ago",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            "₹ 45,000 / month",
+            style: TextStyle(
+                color: AppColors.primaryOrange,
+                fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _OverviewBox extends StatelessWidget {
+  final IconData icon;
+  final String number;
+  final String label;
+
+  const _OverviewBox(this.icon, this.number, this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primaryBlue.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.primaryBlue),
+          const SizedBox(height: 6),
+          Text(number,
+              style:
+              const TextStyle(fontWeight: FontWeight.bold)),
+          Text(label),
+        ],
       ),
     );
   }

@@ -51,33 +51,40 @@ class _SplashScreenState extends State<SplashScreen>
       if (status == AnimationStatus.completed) {
         if (!mounted) return;
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginPage()),
-        );
+        checkLogin();
       }
     });
   }
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
+
   Future<void> checkLogin() async {
-    final token = await _storage.read(key: "auth_token");
+
+    final agentId = await _storage.read(key: "agentId");
 
     if (!mounted) return;
 
-    if (token != null) {
+    if (agentId != null) {
+
+      print("🟢 User Already Logged In");
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardPage()),
       );
+
     } else {
+
+      print("🔴 User Not Logged In");
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     }
   }
+
 
   @override
   void dispose() {

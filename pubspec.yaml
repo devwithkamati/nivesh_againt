@@ -13,28 +13,26 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   flutter_secure_storage: ^10.0.0
+  image_picker: ^1.2.1
+  get: ^4.7.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^6.0.0
-
-  #  App Icon Generator
   flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/appstore.png"
+  adaptive_icon_foreground: "assets/images/appstore.png"
+  adaptive_icon_background: "#FFFFFF"
+  remove_alpha_ios: true
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/images/
-
-#  Launcher Icon Configuration
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/appicon.png"
-
-  # Optional (Recommended for Android 8+ adaptive icons)
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/appicon.png"

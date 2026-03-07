@@ -1,0 +1,396 @@
+
+import 'package:flutter/material.dart';
+
+class MyPostedPropertiesPage extends StatefulWidget {
+  const MyPostedPropertiesPage({Key? key}) : super(key: key);
+
+  @override
+  State<MyPostedPropertiesPage> createState() =>
+      _MyPostedPropertiesPageState();
+}
+
+class _MyPostedPropertiesPageState
+    extends State<MyPostedPropertiesPage> {
+
+  // ---------------- DUMMY PROPERTIES ----------------
+  List<Map<String, dynamic>> properties = [
+    {
+      "id": "PR-101",
+      "title": "2 BHK Apartment",
+      "location": "Ahmedabad",
+      "price": "₹35,00,000",
+      "status": "Active",
+      "date": "05 Jan 2026",
+      "growth": "12%",
+      "leads": 5,
+      "invoicePaid": true,
+    },
+    {
+      "id": "PR-102",
+      "title": "Commercial Office",
+      "location": "Surat",
+      "price": "₹80,00,000",
+      "status": "Inactive",
+      "date": "01 Jan 2026",
+      "growth": "8%",
+      "leads": 2,
+      "invoicePaid": true,
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("My Posted Properties"),
+        centerTitle: true,
+      ),
+
+      body: properties.isEmpty ? _emptyView() : _propertyList(),
+
+      // ================= FLOATING ACTION BUTTON =================
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+
+          // 👇 Navigate to Add Property Screen
+          // final result = await Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (context) => const AddPropertiesScreen(),
+          //   ),
+          // );
+          //
+          // // 👇 If new property added, refresh list (future ready)
+          // if (result != null) {
+          //   setState(() {
+          //     properties.add(result);
+          //   });
+          // }
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  // ================= PROPERTY LIST =================
+  Widget _propertyList() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: properties.length,
+      itemBuilder: (context, index) {
+        return _propertyCard(properties[index], index);
+      },
+    );
+  }
+
+  // ================= PROPERTY CARD =================
+  Widget _propertyCard(Map<String, dynamic> property, int index) {
+    Color statusColor;
+    switch (property["status"]) {
+      case "Active":
+        statusColor = Colors.green;
+        break;
+      case "Inactive":
+        statusColor = Colors.orange;
+        break;
+      default:
+        statusColor = Colors.red;
+    }
+
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            /// TITLE + STATUS
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    property["title"],
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    property["status"],
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            /// LOCATION
+            Row(
+              children: [
+                const Icon(Icons.location_on,
+                    size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(property["location"],
+                    style:
+                    const TextStyle(color: Colors.grey)),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            /// PRICE
+            Row(
+              children: [
+                const Icon(Icons.currency_rupee,
+                    size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(property["price"],
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600)),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            /// PROPERTY GROWTH
+            Row(
+              children: [
+                const Icon(Icons.trending_up,
+                    size: 16, color: Colors.green),
+                const SizedBox(width: 4),
+                Text(
+                  "Growth: ${property["growth"]}",
+                  style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            /// LEADS INFO
+            Row(
+              children: [
+                const Icon(Icons.people,
+                    size: 16, color: Colors.blue),
+                const SizedBox(width: 4),
+                Text(
+                  "Leads: ${property["leads"]}",
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            /// INVOICE INFO
+            if (property["invoicePaid"] == true)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  "₹9 Paid",
+                  style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+
+            const SizedBox(height: 12),
+
+            /// ACTIONS
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+
+                TextButton(
+                  onPressed: () => _generateInvoice(property),
+                  child: const Text("Invoice"),
+                ),
+
+                TextButton(
+                  onPressed: () => _viewProperty(property),
+                  child: const Text("View"),
+                ),
+
+                TextButton(
+                  onPressed: () => _editProperty(index),
+                  child: const Text("Edit"),
+                ),
+
+                TextButton(
+                  onPressed: () => _deleteProperty(index),
+                  child: const Text(
+                    "Delete",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _generateInvoice(Map<String, dynamic> property) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Invoice"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Property ID: ${property["id"]}"),
+            const SizedBox(height: 6),
+            const Text("Posting Charge: ₹9"),
+            const SizedBox(height: 6),
+            Text("Date: ${property["date"]}"),
+            const SizedBox(height: 6),
+            const Text("Status: Paid"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Close"),
+          )
+        ],
+      ),
+    );
+  }
+
+  // ================= EMPTY VIEW =================
+  Widget _emptyView() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment:
+        MainAxisAlignment.center,
+        children: [
+          Icon(Icons.home_work_outlined,
+              size: 80, color: Colors.grey),
+          SizedBox(height: 12),
+          Text(
+            "No properties posted yet",
+            style: TextStyle(
+                color: Colors.grey, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ================= ACTIONS =================
+  void _viewProperty(
+      Map<String, dynamic> property) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Property Details"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
+          children: property.entries
+              .map((e) => Padding(
+            padding:
+            const EdgeInsets.only(
+                bottom: 6),
+            child: Row(
+              children: [
+                Text(
+                  "${e.key}: ",
+                  style: const TextStyle(
+                      fontWeight:
+                      FontWeight.bold),
+                ),
+                Expanded(
+                    child:
+                    Text(e.value)),
+              ],
+            ),
+          ))
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context),
+            child: const Text("Close"),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _editProperty(int index) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      SnackBar(
+        content: Text(
+            "Edit property: ${properties[index]["title"]}"),
+      ),
+    );
+  }
+
+  void _deleteProperty(int index) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title:
+        const Text("Delete Property"),
+        content: const Text(
+            "Are you sure you want to delete this property?"),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context),
+            child:
+            const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                properties
+                    .removeAt(index);
+              });
+              Navigator.pop(context);
+            },
+            child: const Text(
+              "Delete",
+              style: TextStyle(
+                  color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
