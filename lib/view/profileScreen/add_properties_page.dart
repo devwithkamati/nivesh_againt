@@ -1,32 +1,57 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../controller/property_controller.dart';
 import '../../utils/app_colors.dart';
 
 class AddPropertiesPage extends StatefulWidget {
   const AddPropertiesPage({Key? key}) : super(key: key);
 
   @override
-  State<AddPropertiesPage> createState() =>
-      _AddPropertiesPage();
+  State<AddPropertiesPage> createState() => _AddPropertiesPage();
 }
 
-class _AddPropertiesPage
-    extends State<AddPropertiesPage> {
+class _AddPropertiesPage extends State<AddPropertiesPage> {
+  final storage = FlutterSecureStorage();
+  final controller = PropertyController();
+  final titleController = TextEditingController();
+  final priceController = TextEditingController();
+  final areaController = TextEditingController();
+  final descController = TextEditingController();
+  final cityController = TextEditingController();
+  final pincodeController = TextEditingController();
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
 
   int currentStep = 1;
   String selectedCategory = "Sale";
   bool hideNumber = false;
   final List<String> selectedAmenities = [];
 
+  @override
+  void initState() {
+    super.initState();
+    loadUserPhone();
+  }
+
+  Future<void> loadUserPhone() async {
+    String? phone = await storage.read(key: "phone");
+
+    if (phone != null) {
+      phoneController.text = phone; // auto fill 🔥
+    }
+  }
+
   final ImagePicker _picker = ImagePicker();
   List<File> selectedImages = [];
   File? selectedVideo;
 
   Future<void> pickImageFromCamera() async {
-    final XFile? image =
-    await _picker.pickImage(source: ImageSource.camera);
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
       setState(() {
@@ -36,8 +61,7 @@ class _AddPropertiesPage
   }
 
   Future<void> pickVideoFromCamera() async {
-    final XFile? video =
-    await _picker.pickVideo(source: ImageSource.camera);
+    final XFile? video = await _picker.pickVideo(source: ImageSource.camera);
 
     if (video != null) {
       setState(() {
@@ -45,7 +69,6 @@ class _AddPropertiesPage
       });
     }
   }
-
 
   final List<String> propertyTypes = [
     "Apartment",
@@ -55,12 +78,7 @@ class _AddPropertiesPage
     "Flat"
   ];
 
-  final List<String> bhkList = [
-    "1 BHK",
-    "2 BHK",
-    "3 BHK",
-    "4 BHK"
-  ];
+  final List<String> bhkList = ["1 BHK", "2 BHK", "3 BHK", "4 BHK"];
 
   final List<String> statesList = [
     "Uttar Pradesh",
@@ -74,7 +92,6 @@ class _AddPropertiesPage
     "Haryana",
   ];
 
-
   String? selectedState;
   String? selectedType;
   String? selectedBhk;
@@ -83,74 +100,69 @@ class _AddPropertiesPage
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add Property",
-            style: TextStyle(color: Colors.white)),
+        title:
+            const Text("Add Property", style: TextStyle(color: Colors.white)),
         centerTitle: true,
         backgroundColor: AppColors.primaryBlue,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             const SizedBox(height: 20),
+            _card(
+              title: "Basic Details",
+              icon: Icons.home,
+              child: Column(
+                children: [
+                  _textField("Property Title", controller: titleController),
+                  const SizedBox(height: 12),
 
-          _card(
-            title: "Basic Details",
-            icon: Icons.home,
-            child: Column(
-              children: [
-                _textField("Property Title"),
-                const SizedBox(height: 12),
-
-                _dropdown(
-                  label: "Property Type",
-                  value: selectedType,
-                  items: propertyTypes,
-                  onChanged: (val) {
-                    setState(() {
-                      selectedType = val;
-
-                      // Agar Flat nahi hai to BHK reset ho jaye
-                      if (selectedType != "Flat") {
-                        selectedBhk = null;
-                      }
-                    });
-                  },
-                ),
-
-                const SizedBox(height: 12),
-                _categoryToggle(),
-                const SizedBox(height: 12),
-
-                _textField("Price", prefix: "₹"),
-                const SizedBox(height: 12),
-
-                _textField("Area (Sqft)"),
-                const SizedBox(height: 12),
-
-                // 👇 YAHI MAIN CHANGE HAI
-                if (selectedType == "Flat") ...[
                   _dropdown(
-                    label: "BHK",
-                    value: selectedBhk,
-                    items: bhkList,
+                    label: "Property Type",
+                    value: selectedType,
+                    items: propertyTypes,
                     onChanged: (val) {
                       setState(() {
-                        selectedBhk = val;
+                        selectedType = val;
+
+                        // Agar Flat nahi hai to BHK reset ho jaye
+                        if (selectedType != "Flat") {
+                          selectedBhk = null;
+                        }
                       });
                     },
                   ),
+
                   const SizedBox(height: 12),
+                  _categoryToggle(),
+                  const SizedBox(height: 12),
+
+                  _textField("Price", prefix: "₹", controller: priceController),
+                  const SizedBox(height: 12),
+
+                  _textField("Area (Sqft)", controller: areaController),
+
+                  const SizedBox(height: 12),
+
+                  // 👇 YAHI MAIN CHANGE HAI
+                  if (selectedType == "Flat") ...[
+                    _dropdown(
+                      label: "BHK",
+                      value: selectedBhk,
+                      items: bhkList,
+                      onChanged: (val) {
+                        setState(() {
+                          selectedBhk = val;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-
-
             const SizedBox(height: 16),
-
             _card(
               title: "Location Details",
               icon: Icons.location_on,
@@ -164,8 +176,7 @@ class _AddPropertiesPage
                         borderRadius: BorderRadius.circular(8),
                       ),
                       focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(
-                            color: AppColors.primaryBlue),
+                        borderSide: BorderSide(color: AppColors.primaryBlue),
                       ),
                     ),
                     items: statesList.map((state) {
@@ -181,162 +192,150 @@ class _AddPropertiesPage
                     },
                   ),
                   const SizedBox(height: 12),
-                  _textField("City"),
+                  _textField("City", controller: cityController),
                   const SizedBox(height: 12),
                   _textField("Locality"),
                   const SizedBox(height: 12),
                   _textField("Landmark (Optional)"),
                   const SizedBox(height: 12),
-                  _textField("Pincode"),
+                  _textField("Pincode", controller: pincodeController),
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
+            _card(
+              title: "Upload Photos & Video",
+              icon: Icons.photo,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// ================= MEDIA BUTTONS =================
+                  Row(
+                    children: [
+                      _mediaBox("+ Add Photos"),
+                      const SizedBox(width: 10),
+                      _mediaBox("+ Upload Video"),
+                    ],
+                  ),
 
-          _card(
-            title: "Upload Photos & Video",
-            icon: Icons.photo,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-
-                /// ================= MEDIA BUTTONS =================
-                Row(
-                  children: [
-                    _mediaBox("+ Add Photos"),
-                    const SizedBox(width: 10),
-                    _mediaBox("+ Upload Video"),
-                  ],
-                ),
-
-                /// ================= IMAGE PREVIEW =================
-                if (selectedImages.isNotEmpty) ...[
-                  const SizedBox(height: 15),
-
-                  SizedBox(
-                    height: 95,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: selectedImages.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-
-                              /// IMAGE
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.file(
-                                  selectedImages[index],
-                                  width: 95,
-                                  height: 95,
-                                  fit: BoxFit.cover,
+                  /// ================= IMAGE PREVIEW =================
+                  if (selectedImages.isNotEmpty) ...[
+                    const SizedBox(height: 15),
+                    SizedBox(
+                      height: 95,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: selectedImages.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                /// IMAGE
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.file(
+                                    selectedImages[index],
+                                    width: 95,
+                                    height: 95,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              ),
 
-                              /// ❌ REMOVE BUTTON
-                              Positioned(
-                                top: -6,
-                                right: -6,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedImages.removeAt(index);
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 2,
+                                /// ❌ REMOVE BUTTON
+                                Positioned(
+                                  top: -6,
+                                  right: -6,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        selectedImages.removeAt(index);
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
                                       ),
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      size: 14,
-                                      color: Colors.white,
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-
-                /// ================= VIDEO PREVIEW =================
-                if (selectedVideo != null) ...[
-                  const SizedBox(height: 15),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: AppColors.primaryBlue,
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ),
-                    child: Row(
-                      children: [
+                  ],
 
-                        const Icon(
-                          Icons.videocam,
+                  /// ================= VIDEO PREVIEW =================
+                  if (selectedVideo != null) ...[
+                    const SizedBox(height: 15),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
                           color: AppColors.primaryBlue,
                         ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.videocam,
+                            color: AppColors.primaryBlue,
+                          ),
 
-                        const SizedBox(width: 10),
+                          const SizedBox(width: 10),
 
-                        const Expanded(
-                          child: Text(
-                            "Video Selected",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
+                          const Expanded(
+                            child: Text(
+                              "Video Selected",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
 
-                        /// ❌ REMOVE VIDEO
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedVideo = null;
-                            });
-                          },
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.red,
-                          ),
-                        )
-                      ],
+                          /// ❌ REMOVE VIDEO
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedVideo = null;
+                              });
+                            },
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.red,
+                            ),
+                          )
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-
-
-
-
-          const SizedBox(height: 16),
-
+            const SizedBox(height: 16),
             _card(
               title: "Description & Amenities",
               icon: Icons.description,
               child: Column(
                 children: [
                   _textField("Property Description",
-                      maxLines: 3),
+                      maxLines: 3, controller: descController),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 10,
@@ -353,33 +352,33 @@ class _AddPropertiesPage
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
-
             _card(
               title: "Contact Details",
               icon: Icons.person,
-              child: Row(
-                mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
-                  const Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                    children: [
-                      Text("Pawan Kumar",
-                          style: TextStyle(
-                              fontWeight:
-                              FontWeight.bold)),
-                      Text("+91 9876543211"),
-                    ],
+                  _textField(
+                    "Full Name *",
+                    controller: nameController,
                   ),
+                  const SizedBox(height: 12),
+                  _textField(
+                    "Phone Number (Optional)",
+                    controller: phoneController,
+                  ),
+                  const SizedBox(height: 12),
+                  _textField(
+                    "Email *",
+                    controller: emailController,
+                  ),
+                  const SizedBox(height: 12),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Hide Number"),
                       Switch(
-                        activeColor:
-                        AppColors.primaryOrange,
+                        activeColor: AppColors.primaryOrange,
                         value: hideNumber,
                         onChanged: (val) {
                           setState(() {
@@ -392,42 +391,109 @@ class _AddPropertiesPage
                 ],
               ),
             ),
-
+            // _card(
+            //   title: "Contact Details",
+            //   icon: Icons.person,
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //     children: [
+            //       const Column(
+            //         crossAxisAlignment: CrossAxisAlignment.start,
+            //         children: [
+            //           Text("Pawan Kumar",
+            //               style: TextStyle(fontWeight: FontWeight.bold)),
+            //           Text("+91 9876543211"),
+            //         ],
+            //       ),
+            //       Row(
+            //         children: [
+            //           const Text("Hide Number"),
+            //           Switch(
+            //             activeColor: AppColors.primaryOrange,
+            //             value: hideNumber,
+            //             onChanged: (val) {
+            //               setState(() {
+            //                 hideNumber = val;
+            //               });
+            //             },
+            //           ),
+            //         ],
+            //       )
+            //     ],
+            //   ),
+            // ),
             const SizedBox(height: 20),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  AppColors.primaryOrange,
+                  backgroundColor: AppColors.primaryOrange,
                 ),
-                onPressed: () {
-                  final newProperty = {
-                    "id":
-                    "PR-${DateTime.now().millisecondsSinceEpoch}",
-                    "title": "New Property",
-                    "location":
-                    selectedState ?? "Unknown",
-                    "price": "₹50,00,000",
-                    "status": "Active",
-                    "date":
-                    "${DateTime.now().day} "
-                        "${DateTime.now().month} "
-                        "${DateTime.now().year}",
+                onPressed: () async {
+                  String? phone = await storage.read(key: "phone");
+
+                  final fields = {
+                    "PropertyTitle": titleController.text,
+                    "PropertyDescription": descController.text,
+                    "Status": selectedCategory,
+                    "PropertyType": selectedType ?? "Flat",
+                    "Rooms": "2",
+                    "Bathrooms": "1",
+                    "Price": priceController.text,
+                    "Area": areaController.text,
+                    "PropertyAge": "5",
+                    "PropertyFeatures": selectedAmenities.join(", "),
+                    "City": cityController.text,
+                    "State": selectedState ?? "Delhi",
+                    "Country": "India",
+                    "Latitude": "28.6139",
+                    "Longitude": "77.2090",
+                    "ContactName": nameController.text,
+                    "Username": nameController.text,
+                    "Email": emailController.text,
+
+                    // 🔥 FINAL FIX
+                    "Phone": phone ?? phoneController.text,
+
+                    "FlatBHK": selectedBhk ?? "",
+                    "PinCode": pincodeController.text,
+                    "CreatedById": "1"
                   };
 
-                  Navigator.pop(
-                      context, newProperty);
+                  try {
+                    final success = await controller.addPropertyWithMedia(
+                      fields: fields,
+                      images: selectedImages,
+                      video: selectedVideo,
+                    );
+
+                    if (success) {
+                      if (!mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("✅ Property Uploaded")),
+                      );
+
+                      Navigator.pop(context, true);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("❌ ${controller.error}")),
+                      );
+                    }
+                  } catch (e) {
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("❌ Error: $e")),
+                    );
+                  }
                 },
                 child: const Text(
                   "Submit Property",
-                  style:
-                  TextStyle(color: Colors.white),
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
             ),
-
             const SizedBox(height: 30),
           ],
         ),
@@ -442,26 +508,20 @@ class _AddPropertiesPage
   }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(icon,
-                    size: 20,
-                    color: AppColors.primaryBlue),
+                Icon(icon, size: 20, color: AppColors.primaryBlue),
                 const SizedBox(width: 6),
                 Text(title,
                     style: const TextStyle(
-                        fontWeight:
-                        FontWeight.bold,
-                        color:
-                        AppColors.primaryBlue)),
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryBlue)),
               ],
             ),
             const SizedBox(height: 14),
@@ -473,21 +533,15 @@ class _AddPropertiesPage
   }
 
   Widget _textField(String label,
-      {String? prefix, int maxLines = 1}) {
+      {String? prefix, int maxLines = 1, TextEditingController? controller}) {
     return TextField(
+      controller: controller,
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
         prefixText: prefix,
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-              color: AppColors.primaryBlue),
-          borderRadius:
-          BorderRadius.circular(8),
-        ),
         border: OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );
@@ -504,85 +558,92 @@ class _AddPropertiesPage
       decoration: InputDecoration(
         labelText: label,
         focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-              color: AppColors.primaryBlue),
-          borderRadius:
-          BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primaryBlue),
+          borderRadius: BorderRadius.circular(8),
         ),
         border: OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
       items: items
           .map((e) => DropdownMenuItem(
-        value: e,
-        child: Text(e),
-      ))
+                value: e,
+                child: Text(e),
+              ))
           .toList(),
       onChanged: onChanged,
     );
   }
 
   Widget _categoryToggle() {
-    return
-      Row(
-        children: [
-          Icon(Icons.category,color: AppColors.primaryBlue,),
-          SizedBox(width: 5,),
-                Text('Categories',style: TextStyle(color: AppColors.primaryBlue),),
-          SizedBox(width: 20,),
-          /// SALE
-          ChoiceChip(
-            label: Text(
-              "Sale",
-              style: TextStyle(
-                color: selectedCategory == "Sale"
-                    ? Colors.white                 // Selected text
-                    : AppColors.primaryBlue,       // Unselected text
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            selected: selectedCategory == "Sale",
-            selectedColor: AppColors.primaryBlue,
-            backgroundColor: AppColors.background,
-            side: const BorderSide(
-              color: AppColors.primaryBlue,
-            ),
-            onSelected: (_) {
-              setState(() {
-                selectedCategory = "Sale";
-              });
-            },
-          ),
+    return Row(
+      children: [
+        Icon(
+          Icons.category,
+          color: AppColors.primaryBlue,
+        ),
+        SizedBox(
+          width: 5,
+        ),
+        Text(
+          'Categories',
+          style: TextStyle(color: AppColors.primaryBlue),
+        ),
+        SizedBox(
+          width: 20,
+        ),
 
-          // const SizedBox(width: 10),
-          //
-          // /// RENT
-          // ChoiceChip(
-          //   label: Text(
-          //     "Rent",
-          //     style: TextStyle(
-          //       color: selectedCategory == "Rent"
-          //           ? Colors.white
-          //           : AppColors.primaryBlue,
-          //       fontWeight: FontWeight.w500,
-          //     ),
-          //   ),
-          //   selected: selectedCategory == "Rent",
-          //   selectedColor: AppColors.primaryBlue,
-          //   backgroundColor: AppColors.background,
-          //   side: const BorderSide(
-          //     color: AppColors.primaryBlue,
-          //   ),
-          //   onSelected: (_) {
-          //     setState(() {
-          //       selectedCategory = "Rent";
-          //     });
-          //   },
-          // ),
-        ],
-      );
+        /// SALE
+        ChoiceChip(
+          label: Text(
+            "Sale",
+            style: TextStyle(
+              color: selectedCategory == "Sale"
+                  ? Colors.white // Selected text
+                  : AppColors.primaryBlue, // Unselected text
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          selected: selectedCategory == "Sale",
+          selectedColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.background,
+          side: const BorderSide(
+            color: AppColors.primaryBlue,
+          ),
+          onSelected: (_) {
+            setState(() {
+              selectedCategory = "Sale";
+            });
+          },
+        ),
+
+        // const SizedBox(width: 10),
+        //
+        // /// RENT
+        // ChoiceChip(
+        //   label: Text(
+        //     "Rent",
+        //     style: TextStyle(
+        //       color: selectedCategory == "Rent"
+        //           ? Colors.white
+        //           : AppColors.primaryBlue,
+        //       fontWeight: FontWeight.w500,
+        //     ),
+        //   ),
+        //   selected: selectedCategory == "Rent",
+        //   selectedColor: AppColors.primaryBlue,
+        //   backgroundColor: AppColors.background,
+        //   side: const BorderSide(
+        //     color: AppColors.primaryBlue,
+        //   ),
+        //   onSelected: (_) {
+        //     setState(() {
+        //       selectedCategory = "Rent";
+        //     });
+        //   },
+        // ),
+      ],
+    );
   }
 
   Widget _mediaBox(String text) {
@@ -591,18 +652,16 @@ class _AddPropertiesPage
         borderRadius: BorderRadius.circular(8),
         onTap: () {
           if (text == "+ Add Photos") {
-         pickImageFromCamera();
+            pickImageFromCamera();
           } else if (text == "+ Upload Video") {
-          pickVideoFromCamera();  // 👈 YAHAN VIDEO PICK HOGA
+            pickVideoFromCamera(); // 👈 YAHAN VIDEO PICK HOGA
           }
         },
         child: Container(
           height: 80,
           decoration: BoxDecoration(
-            border: Border.all(
-                color: AppColors.primaryBlue),
-            borderRadius:
-            BorderRadius.circular(8),
+            border: Border.all(color: AppColors.primaryBlue),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
             child: Text(
@@ -616,8 +675,6 @@ class _AddPropertiesPage
       ),
     );
   }
-
-
 
   Widget _amenityChip(String label) {
     final bool isSelected = selectedAmenities.contains(label);
@@ -633,14 +690,11 @@ class _AddPropertiesPage
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected
-                ? AppColors.primaryBlue
-                : Colors.grey,
+            color: isSelected ? AppColors.primaryBlue : Colors.grey,
           ),
           color: isSelected
               ? AppColors.primaryBlue.withOpacity(0.1)
@@ -650,21 +704,17 @@ class _AddPropertiesPage
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isSelected
-                  ? Icons.check_box
-                  : Icons.check_box_outline_blank,
+              isSelected ? Icons.check_box : Icons.check_box_outline_blank,
               size: 20,
-              color: isSelected
-                  ? AppColors.primaryBlue
-                  : Colors.grey,
+              color: isSelected ? AppColors.primaryBlue : Colors.grey,
             ),
-            const SizedBox(width: 6,),
+            const SizedBox(
+              width: 6,
+            ),
             Text(
               label,
               style: TextStyle(
-                color: isSelected
-                    ? AppColors.primaryBlue
-                    : Colors.black87,
+                color: isSelected ? AppColors.primaryBlue : Colors.black87,
               ),
             ),
           ],
@@ -672,5 +722,4 @@ class _AddPropertiesPage
       ),
     );
   }
-
 }
