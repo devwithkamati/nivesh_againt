@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../controller/admin_profile_controller.dart';
 import '../../controller/property_controller.dart';
 import '../../utils/app_colors.dart';
 
@@ -16,6 +18,7 @@ class AddPropertiesPage extends StatefulWidget {
 
 class _AddPropertiesPage extends State<AddPropertiesPage> {
   final storage = FlutterSecureStorage();
+  final profileController = Get.find<AdminProfileController>();
   final controller = PropertyController();
   final titleController = TextEditingController();
   final priceController = TextEditingController();
@@ -31,18 +34,27 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
   String selectedCategory = "Sale";
   bool hideNumber = false;
   final List<String> selectedAmenities = [];
-
+  //
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   loadUserPhone();
+  // }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   loadUserData();
+  // }
   @override
   void initState() {
     super.initState();
-    loadUserPhone();
-  }
 
-  Future<void> loadUserPhone() async {
-    String? phone = await storage.read(key: "phone");
+    final profile = profileController.profile.value;
 
-    if (phone != null) {
-      phoneController.text = phone; // auto fill 🔥
+    if (profile != null) {
+      nameController.text = profile.agentName ?? "";
+      emailController.text = profile.emailId ?? "";
+      phoneController.text = profile.mobileNumber ?? "";
     }
   }
 
@@ -81,15 +93,42 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
   final List<String> bhkList = ["1 BHK", "2 BHK", "3 BHK", "4 BHK"];
 
   final List<String> statesList = [
-    "Uttar Pradesh",
-    "Madhya Pradesh",
-    "Delhi",
-    "Rajasthan",
+    "Andaman and Nicobar Islands",
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
     "Bihar",
+    "Chandigarh",
+    "Chhattisgarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Goa",
     "Gujarat",
-    "Maharashtra",
-    "Punjab",
     "Haryana",
+    "Himachal Pradesh",
+    "Jammu and Kashmir",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Ladakh",
+    "Lakshadweep",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Puducherry",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal"
   ];
 
   String? selectedState;
@@ -169,6 +208,7 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
               child: Column(
                 children: [
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     value: selectedState,
                     decoration: InputDecoration(
                       labelText: "State",
@@ -182,9 +222,20 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
                     items: statesList.map((state) {
                       return DropdownMenuItem(
                         value: state,
-                        child: Text(state),
+                        child: Text(
+                          state,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       );
                     }).toList(),
+                    selectedItemBuilder: (context) {
+                      return statesList.map((state) {
+                        return Text(
+                          state,
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      }).toList();
+                    },
                     onChanged: (value) {
                       setState(() {
                         selectedState = value;
@@ -204,7 +255,7 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
             ),
             const SizedBox(height: 16),
             _card(
-              title: "Upload Photos & Video",
+              title: "Add Photos & Video",
               icon: Icons.photo,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,7 +265,7 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
                     children: [
                       _mediaBox("+ Add Photos"),
                       const SizedBox(width: 10),
-                      _mediaBox("+ Upload Video"),
+                      _mediaBox("+ Add Video"),
                     ],
                   ),
 
@@ -364,8 +415,9 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
                   ),
                   const SizedBox(height: 12),
                   _textField(
-                    "Phone Number (Optional)",
+                    "Phone Number",
                     controller: phoneController,
+                    enabled: !hideNumber,
                   ),
                   const SizedBox(height: 12),
                   _textField(
@@ -453,7 +505,9 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
                     "Email": emailController.text,
 
                     // 🔥 FINAL FIX
-                    "Phone": phone ?? phoneController.text,
+                    "Phone": hideNumber
+                        ? "" // ya "hidden"
+                        : (phone ?? phoneController.text),
 
                     "FlatBHK": selectedBhk ?? "",
                     "PinCode": pincodeController.text,
@@ -470,11 +524,7 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
                     if (success) {
                       if (!mounted) return;
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("✅ Property Uploaded")),
-                      );
-
-                      Navigator.pop(context, true);
+                      showSuccessDialog(context); // ✅ ONLY THIS
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("❌ ${controller.error}")),
@@ -494,7 +544,7 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -533,10 +583,14 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
   }
 
   Widget _textField(String label,
-      {String? prefix, int maxLines = 1, TextEditingController? controller}) {
+      {String? prefix,
+      int maxLines = 1,
+      TextEditingController? controller,
+      bool enabled = true}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
         prefixText: prefix,
@@ -616,32 +670,6 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
             });
           },
         ),
-
-        // const SizedBox(width: 10),
-        //
-        // /// RENT
-        // ChoiceChip(
-        //   label: Text(
-        //     "Rent",
-        //     style: TextStyle(
-        //       color: selectedCategory == "Rent"
-        //           ? Colors.white
-        //           : AppColors.primaryBlue,
-        //       fontWeight: FontWeight.w500,
-        //     ),
-        //   ),
-        //   selected: selectedCategory == "Rent",
-        //   selectedColor: AppColors.primaryBlue,
-        //   backgroundColor: AppColors.background,
-        //   side: const BorderSide(
-        //     color: AppColors.primaryBlue,
-        //   ),
-        //   onSelected: (_) {
-        //     setState(() {
-        //       selectedCategory = "Rent";
-        //     });
-        //   },
-        // ),
       ],
     );
   }
@@ -720,6 +748,85 @@ class _AddPropertiesPage extends State<AddPropertiesPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                /// ✅ ICON
+                Container(
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primaryOrange.withOpacity(0.1),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: AppColors.primaryOrange,
+                    size: 60,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                /// TITLE
+                const Text(
+                  "Success 🎉",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryBlue,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// MESSAGE
+                const Text(
+                  "Your property has been added successfully!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textLight),
+                ),
+
+                const SizedBox(height: 20),
+
+                /// BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryOrange,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context); // close dialog
+                      Navigator.pop(context, true); // go back
+                    },
+                    child: const Text(
+                      "Done",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -36,6 +36,20 @@ class AuthController extends GetxController {
 
           value: response.data?.mobileNumber, // 🔥 IMPORTANT
         );
+        await _storage.write(
+          key: "name",
+          value: response.data?.agentName, // check API field name
+        );
+
+        await _storage.write(
+          key: "email",
+          value: response.data?.emailId, // check API field name
+        );
+        String? name = await _storage.read(key: "name");
+        String? email = await _storage.read(key: "email");
+
+        print("STORED NAME: $name");
+        print("STORED EMAIL: $email");
         print("📥 LOGIN PHONE: ${response.data?.mobileNumber}");
 
         final profileController = Get.find<AdminProfileController>();
